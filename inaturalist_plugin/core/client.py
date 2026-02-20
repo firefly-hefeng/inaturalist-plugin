@@ -98,7 +98,10 @@ class INaturalistClient:
         Raises:
             INaturalistAPIError: API 调用失败
         """
-        url = urljoin(self.config.base_url, endpoint)
+        # 确保 base_url 以 / 结尾，endpoint 不以 / 开头
+        base_url = self.config.base_url.rstrip("/") + "/"
+        endpoint = endpoint.lstrip("/")
+        url = base_url + endpoint
         request_headers = {**(headers or {})}
         
         last_exception = None

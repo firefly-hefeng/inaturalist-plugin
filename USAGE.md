@@ -51,7 +51,7 @@
 | 参数 | 类型 | 必填 | 说明 | 示例 |
 |------|------|------|------|------|
 | `q` | string | 否 | 搜索关键词 | `喜鹊`, `Pica pica` |
-| `id` | integer | 否 | 物种 ID | `9083` |
+| `id` | integer | 否 | 物种 ID | `8318` |
 | `parent_id` | integer | 否 | 父分类群 ID | `3` (雀形目) |
 | `rank` | string | 否 | 分类等级 | `species`, `genus`, `family` |
 | `min_rank` | string | 否 | 最小分类等级 | `genus` |
@@ -94,7 +94,7 @@ response = client.get("/taxa", params={
   "per_page": 10,
   "results": [
     {
-      "id": 9083,
+      "id": 8318,
       "name": "Pica pica",
       "rank": "species",
       "rank_level": 10,
@@ -143,7 +143,7 @@ response = client.get("/taxa", params={
 
 ```python
 # 获取喜鹊详情
-response = client.get("/taxa/9083")
+response = client.get("/taxa/8318")
 taxon = response["results"][0]
 
 print(f"名称: {taxon['name']}")
@@ -194,7 +194,7 @@ for taxon in response["results"]:
 
 | 参数 | 类型 | 说明 | 示例 |
 |------|------|------|------|
-| `taxon_id` | integer | 物种 ID | `9083` |
+| `taxon_id` | integer | 物种 ID | `8318` |
 | `taxon_name` | string | 物种名称 | `Pica pica` |
 | `iconic_taxa` | string | 标志性类群 | `Aves,Plantae` |
 
@@ -241,7 +241,7 @@ for taxon in response["results"]:
 ```python
 # 基础搜索
 response = client.get("/observations", params={
-    "taxon_id": 9083,
+    "taxon_id": 8318,
     "quality_grade": "research",
     "photos": "true",
     "per_page": 30
@@ -258,7 +258,7 @@ response = client.get("/observations", params={
 
 # 时间范围搜索
 response = client.get("/observations", params={
-    "taxon_id": 9083,
+    "taxon_id": 8318,
     "d1": "2024-01-01",
     "d2": "2024-12-31",
     "quality_grade": "research"
@@ -291,7 +291,7 @@ response = client.get("/observations", params={
       "quality_grade": "research",
       "species_guess": "喜鹊",
       "taxon": {
-        "id": 9083,
+        "id": 8318,
         "name": "Pica pica",
         "rank": "species"
       },
@@ -397,13 +397,13 @@ results = response["results"]
 # 分页获取
 all_results = client.paginate(
     endpoint="/observations",
-    params={"taxon_id": 9083, "quality_grade": "research"},
+    params={"taxon_id": 8318, "quality_grade": "research"},
     per_page=200,
     max_pages=5
 )
 
 # 获取总数
-total = client.get_total_count("/observations", params={"taxon_id": 9083})
+total = client.get_total_count("/observations", params={"taxon_id": 8318})
 print(f"总共 {total} 条观察记录")
 ```
 
@@ -420,17 +420,17 @@ plugin = INaturalistPlugin()
 species = plugin.search_species("喜鹊", per_page=10)
 
 # 获取详情
-details = plugin.get_species_detail(9083)
+details = plugin.get_species_detail(8318)
 
 # 搜索观察记录
 observations = plugin.search_observations(
-    taxon_id=9083,
+    taxon_id=8318,
     quality_grade="research",
     per_page=30
 )
 
 # 获取图片
-images = plugin.get_species_image_urls(9083, size="large", max_images=5)
+images = plugin.get_species_image_urls(8318, size="large", max_images=5)
 ```
 
 ### 3.3 Web 适配器调用（Web 应用）
@@ -563,7 +563,7 @@ client = INaturalistClient(config)
 
 | 物种 | 学名 | ID |
 |------|------|-----|
-| 喜鹊 | Pica pica | 9083 |
+| 喜鹊 | Pica pica | 891704 |
 | 麻雀 | Passer montanus | 11901 |
 | 家燕 | Hirundo rustica | 14825 |
 | 珠颈斑鸠 | Spilopelia chinensis | 11515 |

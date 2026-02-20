@@ -36,18 +36,18 @@ results = plugin.search_species("喜鹊")
 for taxon in results:
     print(f"{taxon.display_name} - {taxon.observations_count} 条观察记录")
 
-# 获取详细信息
-details = plugin.get_species_detail(9083)
+# 获取详细信息 (以喜鹊属 Pica 为例，ID: 8318)
+details = plugin.get_species_detail(8318)
 print(f"学名: {details.name}")
 print(f"Wikipedia: {details.wikipedia_summary}")
 
 # 下载图片
-images = plugin.download_species_images(9083, size="large", max_images=5)
+images = plugin.download_species_images(8318, size="large", max_images=5)
 print(f"已下载 {len(images)} 张图片")
 
 # 搜索观察记录
 observations = plugin.search_observations(
-    taxon_id=9083,
+    taxon_id=8318,
     lat=39.9,
     lng=116.4,
     radius=10,
@@ -58,20 +58,34 @@ observations = plugin.search_observations(
 ## 项目结构
 
 ```
-inaturalist_plugin/
-├── __init__.py              # 主插件类
-├── core/
-│   └── client.py            # API 客户端
-├── models/
-│   ├── taxon.py             # 物种数据模型
-│   └── observation.py       # 观察记录模型
-├── services/
-│   ├── taxon_service.py     # 物种服务
-│   └── observation_service.py  # 观察记录服务
-├── utils/
-│   └── image_utils.py       # 图片工具
-└── adapters/
-    └── web_adapter.py       # Web 适配器
+inaturalist/
+├── inaturalist_plugin/      # 核心插件
+│   ├── __init__.py          # 主插件类
+│   ├── core/
+│   │   └── client.py        # API 客户端
+│   ├── models/              # 数据模型
+│   │   ├── taxon.py         # 物种模型
+│   │   └── observation.py   # 观察记录模型
+│   ├── services/            # 服务接口
+│   │   ├── taxon_service.py
+│   │   └── observation_service.py
+│   ├── utils/
+│   │   └── image_utils.py   # 图片工具
+│   └── adapters/
+│       └── web_adapter.py   # Web 适配器
+│
+├── tests/                   # 测试套件
+│   ├── test_core.py         # 核心测试
+│   └── TEST_REPORT.md       # 测试报告
+│
+├── frontend/                # 独立前端应用
+│   ├── app.py               # Flask 应用
+│   ├── templates/           # HTML 模板
+│   └── static/              # CSS/JS
+│
+├── examples/                # 使用示例
+├── outputs/                 # 测试结果
+└── docs/                    # 文档
 ```
 
 ## API 接口概览
@@ -107,6 +121,8 @@ inaturalist_plugin/
 - [API 参考文档](API_REFERENCE.md) - 详细的接口说明
 - [使用示例](EXAMPLES.md) - 丰富的代码示例
 - [接口使用介绍](USAGE.md) - 数据接口和调用方式
+- [测试报告](tests/TEST_REPORT.md) - 测试结果
+- [前端说明](frontend/README.md) - Web 应用使用指南
 
 ## Web 集成示例
 
@@ -142,6 +158,45 @@ router = create_fastapi_routes(adapter)
 app.include_router(router)
 ```
 
+## 测试
+
+运行测试套件：
+
+```bash
+cd tests
+python test_core.py
+```
+
+测试结果将保存到 `outputs/` 目录。
+
+## 前端应用
+
+项目包含一个完整的 Web 前端应用：
+
+```bash
+cd frontend
+pip install flask flask-cors
+python app.py
+```
+
+访问 http://localhost:5000 查看物种查询门户。
+
+功能包括：
+- 物种搜索与自动补全
+- 物种详情展示
+- 观察记录浏览
+- 交互式地图
+
+## 更新日志
+
+### v1.0.0 (2026-02-20)
+- ✅ 初始版本发布
+- ✅ 完整 API 接口实现
+- ✅ 测试套件（11 项测试全部通过）
+- ✅ Web 前端应用
+- ✅ 图片下载和缓存功能
+- ✅ Flask/FastAPI 适配器
+
 ## 许可证
 
 MIT License
@@ -150,3 +205,4 @@ MIT License
 
 - 数据来源: [iNaturalist](https://www.inaturalist.org/)
 - API 文档: [iNaturalist API v1](https://api.inaturalist.org/v1/docs/)
+- 感谢所有为 iNaturalist 贡献数据的自然观察者

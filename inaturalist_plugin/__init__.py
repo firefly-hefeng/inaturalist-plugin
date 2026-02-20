@@ -14,11 +14,14 @@ iNaturalist 数据插件
     >>> from inaturalist_plugin import INaturalistPlugin
     >>> plugin = INaturalistPlugin()
     >>> species = plugin.search_species("喜鹊")
-    >>> details = plugin.get_species_detail(9083)
+    >>> details = plugin.get_species_detail(8318)  # 喜鹊属 Pica
 """
 
 __version__ = "1.0.0"
 __author__ = "Nature Portal"
+
+# 导入 typing 类型
+from typing import List, Optional, Dict, Any
 
 from inaturalist_plugin.core.client import (
     INaturalistClient,
@@ -315,5 +318,3 @@ class INaturalistPlugin:
         )
 
 
-# 重新导出 typing 中的类型
-from typing import List, Optional, Dict, Any

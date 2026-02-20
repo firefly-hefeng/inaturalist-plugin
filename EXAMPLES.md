@@ -34,7 +34,12 @@ for taxon in results:
 
 **输出：**
 ```
-ID: 9083
+ID: 8318
+学名: Pica
+俗名: 喜鹊属 (Pica)
+观察数: 340000
+----------------------------------------
+ID: 891704
 学名: Pica pica
 俗名: 喜鹊 (Pica pica)
 观察数: 150000
@@ -48,8 +53,8 @@ ID: 9083
 ```python
 from inaturalist_plugin import get_species
 
-# 获取喜鹊详细信息
-taxon = get_species(9083)
+# 获取喜鹊属详细信息 (属级别)
+taxon = get_species(8318)
 
 print(f"学名: {taxon.name}")
 print(f"中文名: {taxon.chinese_common_name}")
@@ -77,9 +82,9 @@ from inaturalist_plugin import INaturalistPlugin
 
 plugin = INaturalistPlugin()
 
-# 获取喜鹊的图片 URL
+# 获取喜鹊属的图片 URL (包含该属下所有物种的图片)
 images = plugin.get_species_image_urls(
-    taxon_id=9083,
+    taxon_id=8318,
     size="medium",
     max_images=5
 )
@@ -93,7 +98,7 @@ for img in images:
 
 # 下载图片到本地
 local_paths = plugin.download_species_images(
-    taxon_id=9083,
+    taxon_id=8318,
     size="large",
     max_images=5
 )
@@ -110,9 +115,9 @@ for path in local_paths:
 ```python
 from inaturalist_plugin import search_observations
 
-# 搜索喜鹊的研究级观察记录
+# 搜索喜鹊属的研究级观察记录 (包含 Pica pica 等)
 observations = search_observations(
-    taxon_id=9083,
+    taxon_id=8318,
     quality_grade="research",
     has_photos=True,
     per_page=10
@@ -224,8 +229,8 @@ from inaturalist_plugin.services.taxon_service import TaxonService
 client = create_client()
 service = TaxonService(client)
 
-# 获取喜鹊的完整分类信息
-taxon = get_species(9083)
+# 获取喜鹊属的完整分类信息
+taxon = get_species(8318)
 
 print(f"目标物种: {taxon.display_name}")
 print(f"学名: {taxon.name}")
@@ -259,7 +264,7 @@ from inaturalist_plugin.utils.image_utils import ImageDownloader
 plugin = INaturalistPlugin()
 
 # 批量下载多个物种的图片
-species_ids = [9083, 11901, 14825]  # 喜鹊、麻雀、家燕
+species_ids = [8318, 11901, 14825]  # 喜鹊属、麻雀、家燕
 
 downloader = ImageDownloader(cache_dir="./species_images")
 
@@ -497,8 +502,8 @@ def export_observations_csv(taxon_id: int, filename: str):
     print(f"已导出 {len(observations)} 条记录到 {filename}")
 
 # 使用示例
-export_species_json(9083, "magpie.json")
-export_observations_csv(9083, "magpie_observations.csv")
+export_species_json(8318, "magpie.json")
+export_observations_csv(8318, "magpie_observations.csv")
 ```
 
 ---
@@ -511,9 +516,9 @@ from inaturalist_plugin import INaturalistPlugin
 
 plugin = INaturalistPlugin()
 
-# 搜索喜鹊的观察记录
+# 搜索喜鹊属的观察记录
 observations = plugin.search_observations(
-    taxon_id=9083,
+    taxon_id=8318,
     lat=39.9,
     lng=116.4,
     radius=50,
