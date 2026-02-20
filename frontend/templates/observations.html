@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+
+{% block title %}观察记录 - 自然物种查询门户{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-4">
+        <i class="fas fa-camera text-success me-2"></i>观察记录
+    </h2>
+    
+    <!-- 筛选栏 -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form id="filter-form" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">物种</label>
+                    <input type="text" id="filter-taxon" class="form-control" 
+                           placeholder="输入物种名称..." autocomplete="off">
+                    <input type="hidden" id="filter-taxon-id" value="{{ taxon_id or '' }}">
+                    <div id="taxon-suggestions" class="search-suggestions"></div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">质量等级</label>
+                    <select id="filter-quality" class="form-select">
+                        <option value="research">研究级</option>
+                        <option value="needs_id">需鉴定</option>
+                        <option value="casual">休闲级</option>
+                        <option value="any">所有</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">纬度</label>
+                    <input type="number" id="filter-lat" class="form-control" 
+                           placeholder="例如: 39.9" step="any" value="{{ lat or '' }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">经度</label>
+                    <input type="number" id="filter-lng" class="form-control" 
+                           placeholder="例如: 116.4" step="any" value="{{ lng or '' }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">半径 (km)</label>
+                    <input type="number" id="filter-radius" class="form-control" 
+                           value="10" min="1" max="100">
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 加载状态 -->
+    <div id="loading-indicator" class="text-center py-5 d-none">
+        <div class="spinner-border text-success" role="status">
+            <span class="visually-hidden">加载中...</span>
+        </div>
+        <p class="text-muted mt-2">搜索观察记录...</p>
+    </div>
+    
+    <!-- 结果统计 -->
+    <div id="results-stats" class="mb-3 d-none">
+        <span class="text-muted">找到 <strong id="total-count">0</strong> 条观察记录</span>
+    </div>
+    
+    <!-- 观察记录网格 -->
+    <div id="observations-grid" class="row g-3">
+        <div class="col-12 text-center py-5 text-muted">
+            <i class="fas fa-camera fa-3x mb-3"></i>
+            <h4>开始探索观察记录</h4>
+            <p>使用上方筛选条件搜索研究级观察记录</p>
+        </div>
+    </div>
+    
+    <!-- 分页 -->
+    <div id="pagination" class="mt-4 d-none">
+        <nav aria-label="Observations pagination">
+            <ul class="pagination justify-content-center">
+                <li class="page-item disabled" id="prev-page">
+                    <a class="page-link" href="#" tabindex="-1">上一页</a>
+                </li>
+                <li class="page-item active">
+                    <span class="page-link" id="current-page">1</span>
+                </li>
+                <li class="page-item" id="next-page">
+                    <a class="page-link" href="#">下一页</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentPage = 1;
+let currentFilters = {};
+
+// 加载观察记录
+async function loadObservations(page = 1) {
+    const taxonId = document.getElementById('filter-taxon-id').value;
+    const quality = document.getElementById('filter-quality').value;
+    const lat = document.getElementById('filter-lat').value;
+    const lng = document.getElementById('filter-lng').value;
+    const radius = document.getElementById('filter-radius').value;
+    
+    currentPage = page;
+    currentFilters = { taxonId, quality, lat, lng, radius };
+    
+    // 显示加载状态
+    document.getElementById('loading-indicator').classList.remove('d-none');
+    document.getElementById('observations-grid').innerHTML = '';
+    document.getElementById('pagination').classList.add('d-none');
+    
+    try {
+        const params = new URLSearchParams({
+            quality_grade: quality === 'any' ? '' : quality,
+            per_page: 12,
+            page: page
+        });
+        
+        if (taxonId) params.append('taxon_id', taxonId);
+        if (lat && lng) {
+            params.append('lat', lat);
+            params.append('lng', lng);
+            params.append('radius', radius);
+        }
+        
+        const response = await fetch(`/api/observations?${params}`);
+        const data = await response.json();
+        
+        document.getElementById('loading-indicator').classList.add('d-none');
+        
+        if (data.success) {
+            displayObservations(data);
+        } else {
+            displayError(data.error || '搜索失败');
+        }
+    } catch (error) {
+        document.getElementById('loading-indicator').classList.add('d-none');
+        displayError('网络错误，请稍后重试');
+        console.error('Error:', error);
+    }
+}
+
+// 显示观察记录
+function displayObservations(data) {
+    const container = document.getElementById('observations-grid');
+    const results = data.results || [];
+    
+    // 更新统计
+    document.getElementById('results-stats').classList.remove('d-none');
+    document.getElementById('total-count').textContent = data.total || 0;
+    
+    if (results.length === 0) {
+        container.innerHTML = `
+            <div class="col-12 text-center py-5 text-muted">
+                <i class="fas fa-search fa-3x mb-3"></i>
+                <h4>未找到观察记录</h4>
+                <p>尝试调整筛选条件</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = results.map(obs => `
+        <div class="col-md-4 col-lg-3">
+            <div class="card observation-card h-100">
+                <div class="observation-image">
+                    ${obs.photos.length > 0 ? `
+                        <img src="${obs.photos[0].medium || obs.photos[0].url}" 
+                             class="card-img-top" alt="${obs.species_guess || ''}">
+                    ` : `
+                        <div class="no-image bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                            <i class="fas fa-image text-muted fa-2x"></i>
+                        </div>
+                    `}
+                    <span class="quality-badge ${obs.quality_grade === 'research' ? 'bg-success' : 'bg-warning'}">
+                        ${obs.quality_grade === 'research' ? '研究级' : 
+                          obs.quality_grade === 'needs_id' ? '需鉴定' : '休闲级'}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <a href="/species/${obs.taxon ? obs.taxon.id : ''}" class="text-decoration-none">
+                            ${obs.species_guess || (obs.taxon ? obs.taxon.name : 'Unknown')}
+                        </a>
+                    </h6>
+                    <p class="card-text small text-muted mb-1">
+                        <i class="fas fa-user me-1"></i>${obs.user ? obs.user.login : 'Unknown'}
+                    </p>
+                    <p class="card-text small text-muted mb-1">
+                        <i class="fas fa-map-marker-alt me-1"></i>
+                        ${obs.location ? (obs.location.place_guess || `${obs.location.latitude?.toFixed(2)}, ${obs.location.longitude?.toFixed(2)}`) : 'Unknown'}
+                    </p>
+                    <p class="card-text small text-muted">
+                        <i class="fas fa-calendar me-1"></i>${obs.observed_on || 'Unknown'}
+                    </p>
+                </div>
+                <div class="card-footer bg-white">
+                    <a href="${obs.url}" target="_blank" class="btn btn-sm btn-outline-success w-100">
+                        在 iNaturalist 上查看
+                    </a>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    // 更新分页
+    updatePagination(data.total);
+}
+
+// 更新分页
+function updatePagination(total) {
+    const totalPages = Math.ceil(total / 12);
+    const pagination = document.getElementById('pagination');
+    
+    if (totalPages <= 1) {
+        pagination.classList.add('d-none');
+        return;
+    }
+    
+    pagination.classList.remove('d-none');
+    document.getElementById('current-page').textContent = currentPage;
+    
+    const prevBtn = document.getElementById('prev-page');
+    const nextBtn = document.getElementById('next-page');
+    
+    if (currentPage <= 1) {
+        prevBtn.classList.add('disabled');
+    } else {
+        prevBtn.classList.remove('disabled');
+        prevBtn.onclick = (e) => {
+            e.preventDefault();
+            loadObservations(currentPage - 1);
+        };
+    }
+    
+    if (currentPage >= totalPages) {
+        nextBtn.classList.add('disabled');
+    } else {
+        nextBtn.classList.remove('disabled');
+        nextBtn.onclick = (e) => {
+            e.preventDefault();
+            loadObservations(currentPage + 1);
+        };
+    }
+}
+
+// 显示错误
+function displayError(message) {
+    document.getElementById('observations-grid').innerHTML = `
+        <div class="col-12">
+            <div class="alert alert-danger" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>${message}
+            </div>
+        </div>
+    `;
+}
+
+// 设置物种自动补全
+function setupTaxonAutocomplete() {
+    const input = document.getElementById('filter-taxon');
+    const hiddenInput = document.getElementById('filter-taxon-id');
+    const suggestions = document.getElementById('taxon-suggestions');
+    
+    let debounceTimer;
+    
+    input.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        const query = this.value.trim();
+        
+        if (query.length < 2) {
+            suggestions.style.display = 'none';
+            return;
+        }
+        
+        debounceTimer = setTimeout(async () => {
+            try {
+                const response = await fetch(`/api/autocomplete?q=${encodeURIComponent(query)}&per_page=10`);
+                const data = await response.json();
+                
+                if (data.success && data.suggestions.length > 0) {
+                    suggestions.innerHTML = data.suggestions.map(s => `
+                        <div class="suggestion-item" data-id="${s.id}" data-name="${s.name}">
+                            <div class="suggestion-name">${s.display_name}</div>
+                            <div class="suggestion-meta">${s.rank} • ${s.iconic_taxon || 'Unknown'}</div>
+                        </div>
+                    `).join('');
+                    
+                    suggestions.style.display = 'block';
+                    
+                    // 点击建议
+                    suggestions.querySelectorAll('.suggestion-item').forEach(item => {
+                        item.addEventListener('click', function() {
+                            input.value = this.dataset.name;
+                            hiddenInput.value = this.dataset.id;
+                            suggestions.style.display = 'none';
+                        });
+                    });
+                } else {
+                    suggestions.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Autocomplete error:', error);
+            }
+        }, 300);
+    });
+    
+    // 点击外部关闭建议
+    document.addEventListener('click', function(e) {
+        if (!input.contains(e.target) && !suggestions.contains(e.target)) {
+            suggestions.style.display = 'none';
+        }
+    });
+}
+
+// 初始化
+document.addEventListener('DOMContentLoaded', function() {
+    setupTaxonAutocomplete();
+    
+    // 表单提交
+    document.getElementById('filter-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        loadObservations(1);
+    });
+    
+    // 如果有初始参数，自动搜索
+    const initialTaxonId = document.getElementById('filter-taxon-id').value;
+    const initialLat = document.getElementById('filter-lat').value;
+    const initialLng = document.getElementById('filter-lng').value;
+    
+    if (initialTaxonId || (initialLat && initialLng)) {
+        loadObservations(1);
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,504 @@
+{% extends "base.html" %}
+
+{% block title %}物种详情 - 自然物种查询门户{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- 加载状态 -->
+    <div id="loading-indicator" class="text-center py-5">
+        <div class="spinner-border text-success" role="status">
+            <span class="visually-hidden">加载中...</span>
+        </div>
+        <p class="text-muted mt-2">加载物种信息...</p>
+    </div>
+    
+    <!-- 错误提示 -->
+    <div id="error-message" class="d-none">
+        <div class="alert alert-danger" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <span id="error-text">加载失败</span>
+        </div>
+        <a href="/search" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-1"></i>返回搜索
+        </a>
+    </div>
+    
+    <!-- 物种详情内容 -->
+    <div id="species-content" class="d-none">
+        <!-- 面包屑导航 -->
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb" id="taxonomy-breadcrumb">
+                <li class="breadcrumb-item"><a href="/">首页</a></li>
+                <li class="breadcrumb-item"><a href="/search">搜索</a></li>
+                <li class="breadcrumb-item active" aria-current="page">物种详情</li>
+            </ol>
+        </nav>
+        
+        <!-- 物种头部信息 -->
+        <div class="species-header mb-4">
+            <div class="row">
+                <div class="col-md-8">
+                    <h1 id="species-name" class="mb-2"></h1>
+                    <h3 id="species-scientific-name" class="text-muted fst-italic mb-3"></h3>
+                    
+                    <div class="species-badges mb-3" id="species-badges">
+                        <!-- 动态生成 -->
+                    </div>
+                    
+                    <div class="species-stats" id="species-stats">
+                        <!-- 动态生成 -->
+                    </div>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <div id="species-main-image" class="species-main-image">
+                        <!-- 主图 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 详情标签页 -->
+        <ul class="nav nav-tabs" id="speciesTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" 
+                        type="button" role="tab">
+                    <i class="fas fa-info-circle me-1"></i>概览
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="photos-tab" data-bs-toggle="tab" data-bs-target="#photos" 
+                        type="button" role="tab">
+                    <i class="fas fa-images me-1"></i>图片
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="observations-tab" data-bs-toggle="tab" data-bs-target="#observations" 
+                        type="button" role="tab">
+                    <i class="fas fa-camera me-1"></i>观察记录
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="taxonomy-tab" data-bs-toggle="tab" data-bs-target="#taxonomy" 
+                        type="button" role="tab">
+                    <i class="fas fa-sitemap me-1"></i>分类
+                </button>
+            </li>
+        </ul>
+        
+        <div class="tab-content" id="speciesTabsContent">
+            <!-- 概览 -->
+            <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                <div class="p-4">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h5 class="mb-3">简介</h5>
+                            <div id="wikipedia-content" class="mb-4">
+                                <!-- Wikipedia 内容 -->
+                            </div>
+                            
+                            <h5 class="mb-3">分类信息</h5>
+                            <table class="table table-striped" id="taxonomy-table">
+                                <tbody>
+                                    <!-- 动态生成 -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col-md-4">
+                            <h5 class="mb-3">外部链接</h5>
+                            <div class="list-group" id="external-links">
+                                <!-- 动态生成 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 图片 -->
+            <div class="tab-pane fade" id="photos" role="tabpanel">
+                <div class="p-4">
+                    <div id="species-photos" class="row g-3">
+                        <!-- 动态生成 -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 观察记录 -->
+            <div class="tab-pane fade" id="observations" role="tabpanel">
+                <div class="p-4">
+                    <div id="species-observations" class="row g-3">
+                        <!-- 动态生成 -->
+                    </div>
+                    <div class="text-center mt-4">
+                        <a href="#" id="more-observations-link" class="btn btn-outline-success">
+                            查看更多观察记录 <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 分类 -->
+            <div class="tab-pane fade" id="taxonomy" role="tabpanel">
+                <div class="p-4">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5 class="mb-3">分类路径</h5>
+                            <div id="taxonomy-ancestors" class="taxonomy-list">
+                                <!-- 动态生成 -->
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="mb-3">子分类群</h5>
+                            <div id="taxonomy-children" class="taxonomy-list">
+                                <!-- 动态生成 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 图片模态框 -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">图片预览</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modal-image" src="" alt="" class="img-fluid">
+                <p id="modal-attribution" class="text-muted mt-2 small"></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const taxonId = {{ taxon_id }};
+
+// 加载物种详情
+async function loadSpeciesDetail() {
+    try {
+        const response = await fetch(`/api/species/${taxonId}`);
+        const data = await response.json();
+        
+        document.getElementById('loading-indicator').classList.add('d-none');
+        
+        if (data.success) {
+            displaySpeciesDetail(data);
+        } else {
+            showError(data.error || '加载失败');
+        }
+    } catch (error) {
+        document.getElementById('loading-indicator').classList.add('d-none');
+        showError('网络错误，请稍后重试');
+        console.error('Error loading species detail:', error);
+    }
+}
+
+// 显示物种详情
+function displaySpeciesDetail(data) {
+    const taxon = data.taxon;
+    const content = document.getElementById('species-content');
+    content.classList.remove('d-none');
+    
+    // 基本信息
+    document.getElementById('species-name').textContent = 
+        taxon.common_names?.chinese || taxon.common_names?.preferred || taxon.name;
+    document.getElementById('species-scientific-name').textContent = taxon.name;
+    
+    // 徽章
+    const badgesHtml = `
+        <span class="badge bg-primary me-2">${taxon.rank}</span>
+        <span class="badge bg-secondary me-2">${taxon.iconic_taxon || 'Unknown'}</span>
+        ${taxon.conservation_status ? `
+            <span class="badge ${getConservationBadgeClass(taxon.conservation_status)}">
+                ${taxon.conservation_status}
+            </span>
+        ` : ''}
+    `;
+    document.getElementById('species-badges').innerHTML = badgesHtml;
+    
+    // 统计
+    const statsHtml = `
+        <div class="row text-center">
+            <div class="col-4">
+                <div class="stat-value">${formatNumber(taxon.observations_count)}</div>
+                <div class="stat-label">观察记录</div>
+            </div>
+            <div class="col-4">
+                <div class="stat-value">${taxon.photos?.length || 0}</div>
+                <div class="stat-label">图片</div>
+            </div>
+            <div class="col-4">
+                <div class="stat-value">${data.ancestors?.length || 0}</div>
+                <div class="stat-label">分类层级</div>
+            </div>
+        </div>
+    `;
+    document.getElementById('species-stats').innerHTML = statsHtml;
+    
+    // 主图
+    const mainImageHtml = taxon.default_photo?.large ? `
+        <img src="${taxon.default_photo.large}" alt="${taxon.name}" class="img-fluid rounded shadow">
+    ` : `
+        <div class="no-image-large bg-light d-flex align-items-center justify-content-center rounded">
+            <i class="fas fa-leaf text-muted fa-5x"></i>
+        </div>
+    `;
+    document.getElementById('species-main-image').innerHTML = mainImageHtml;
+    
+    // 面包屑
+    if (data.ancestors) {
+        const breadcrumbHtml = `
+            <li class="breadcrumb-item"><a href="/">首页</a></li>
+            <li class="breadcrumb-item"><a href="/search">搜索</a></li>
+            ${data.ancestors.slice(-2).map(a => `
+                <li class="breadcrumb-item">
+                    <a href="/species/${a.id}">${a.display_name || a.name}</a>
+                </li>
+            `).join('')}
+            <li class="breadcrumb-item active" aria-current="page">
+                ${taxon.common_names?.chinese || taxon.name}
+            </li>
+        `;
+        document.getElementById('taxonomy-breadcrumb').innerHTML = breadcrumbHtml;
+    }
+    
+    // Wikipedia 内容
+    const wikiContent = document.getElementById('wikipedia-content');
+    if (taxon.wikipedia?.summary) {
+        wikiContent.innerHTML = `
+            <p>${taxon.wikipedia.summary}</p>
+            ${taxon.wikipedia.url ? `
+                <a href="${taxon.wikipedia.url}" target="_blank" class="btn btn-outline-primary btn-sm">
+                    在 Wikipedia 上阅读更多 <i class="fas fa-external-link-alt ms-1"></i>
+                </a>
+            ` : ''}
+        `;
+    } else {
+        wikiContent.innerHTML = '<p class="text-muted">暂无简介</p>';
+    }
+    
+    // 分类表格
+    const taxonomyTable = document.getElementById('taxonomy-table');
+    if (data.ancestors) {
+        const rankNames = {
+            'kingdom': '界', 'phylum': '门', 'class': '纲',
+            'order': '目', 'family': '科', 'genus': '属', 'species': '种'
+        };
+        
+        const tableHtml = data.ancestors.map(a => `
+            <tr>
+                <td class="text-muted">${rankNames[a.rank] || a.rank}</td>
+                <td>
+                    <a href="/species/${a.id}" class="text-decoration-none">
+                        ${a.display_name || a.name}
+                    </a>
+                </td>
+            </tr>
+        `).join('') + `
+            <tr class="table-success">
+                <td class="text-muted">${rankNames[taxon.rank] || taxon.rank}</td>
+                <td><strong>${taxon.common_names?.chinese || taxon.name}</strong></td>
+            </tr>
+        `;
+        taxonomyTable.innerHTML = tableHtml;
+    }
+    
+    // 外部链接
+    const linksHtml = `
+        <a href="https://www.inaturalist.org/taxa/${taxon.id}" target="_blank" 
+           class="list-group-item list-group-item-action">
+            <i class="fas fa-external-link-alt me-2 text-success"></i>
+            iNaturalist 页面
+        </a>
+        ${taxon.wikipedia?.url ? `
+            <a href="${taxon.wikipedia.url}" target="_blank" 
+               class="list-group-item list-group-item-action">
+                <i class="fab fa-wikipedia-w me-2 text-primary"></i>
+                Wikipedia 页面
+            </a>
+        ` : ''}
+    `;
+    document.getElementById('external-links').innerHTML = linksHtml;
+    
+    // 加载图片
+    loadSpeciesPhotos();
+    
+    // 加载观察记录
+    loadSpeciesObservations();
+    
+    // 加载分类信息
+    loadTaxonomyInfo();
+    
+    // 更新查看更多链接
+    document.getElementById('more-observations-link').href = 
+        `/observations?taxon_id=${taxonId}`;
+}
+
+// 加载物种图片
+async function loadSpeciesPhotos() {
+    try {
+        const response = await fetch(`/api/species/${taxonId}/images?size=medium&max=20`);
+        const data = await response.json();
+        
+        const container = document.getElementById('species-photos');
+        
+        if (data.success && data.images.length > 0) {
+            container.innerHTML = data.images.map((img, index) => `
+                <div class="col-md-4 col-sm-6">
+                    <div class="photo-card" onclick="openImageModal('${img.large || img.url}', '${escapeHtml(img.attribution)}')">
+                        <img src="${img.medium || img.url}" alt="" class="img-fluid rounded">
+                        <div class="photo-overlay">
+                            <span class="text-white small">${escapeHtml(img.attribution.substring(0, 50))}...</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            container.innerHTML = `
+                <div class="col-12 text-center py-5 text-muted">
+                    <i class="fas fa-image fa-3x mb-3"></i>
+                    <p>暂无图片</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading photos:', error);
+    }
+}
+
+// 加载观察记录
+async function loadSpeciesObservations() {
+    try {
+        const response = await fetch(`/api/observations?taxon_id=${taxonId}&quality_grade=research&per_page=6`);
+        const data = await response.json();
+        
+        const container = document.getElementById('species-observations');
+        
+        if (data.success && data.results.length > 0) {
+            container.innerHTML = data.results.map(obs => `
+                <div class="col-md-4">
+                    <div class="card observation-card h-100">
+                        ${obs.photos.length > 0 ? `
+                            <img src="${obs.photos[0].medium || obs.photos[0].url}" 
+                                 class="card-img-top" alt="">
+                        ` : ''}
+                        <div class="card-body">
+                            <p class="card-text small text-muted mb-1">
+                                <i class="fas fa-user me-1"></i>${obs.user?.login || 'Unknown'}
+                            </p>
+                            <p class="card-text small text-muted mb-1">
+                                <i class="fas fa-map-marker-alt me-1"></i>${obs.location?.place_guess || 'Unknown'}
+                            </p>
+                            <p class="card-text small text-muted">
+                                <i class="fas fa-calendar me-1"></i>${obs.observed_on || 'Unknown'}
+                            </p>
+                        </div>
+                        <div class="card-footer bg-white">
+                            <a href="${obs.url}" target="_blank" class="btn btn-sm btn-outline-success w-100">
+                                在 iNaturalist 上查看
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            container.innerHTML = `
+                <div class="col-12 text-center py-5 text-muted">
+                    <i class="fas fa-camera fa-3x mb-3"></i>
+                    <p>暂无观察记录</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading observations:', error);
+    }
+}
+
+// 加载分类信息
+async function loadTaxonomyInfo() {
+    try {
+        // 加载祖先
+        const ancestorsResponse = await fetch(`/api/taxonomy/${taxonId}/ancestors`);
+        const ancestorsData = await ancestorsResponse.json();
+        
+        const ancestorsContainer = document.getElementById('taxonomy-ancestors');
+        if (ancestorsData.success && ancestorsData.results.length > 0) {
+            ancestorsContainer.innerHTML = ancestorsData.results.map(a => `
+                <div class="taxonomy-item">
+                    <span class="taxonomy-rank">${a.rank}</span>
+                    <a href="/species/${a.id}" class="taxonomy-name">${a.display_name || a.name}</a>
+                </div>
+            `).join('');
+        } else {
+            ancestorsContainer.innerHTML = '<p class="text-muted">暂无分类路径信息</p>';
+        }
+        
+        // 加载子分类
+        const childrenResponse = await fetch(`/api/taxonomy/${taxonId}/children`);
+        const childrenData = await childrenResponse.json();
+        
+        const childrenContainer = document.getElementById('taxonomy-children');
+        if (childrenData.success && childrenData.results.length > 0) {
+            childrenContainer.innerHTML = childrenData.results.map(c => `
+                <div class="taxonomy-item">
+                    <span class="taxonomy-rank">${c.rank}</span>
+                    <a href="/species/${c.id}" class="taxonomy-name">${c.display_name || c.name}</a>
+                    <span class="taxonomy-count">${formatNumber(c.observations_count)}</span>
+                </div>
+            `).join('');
+        } else {
+            childrenContainer.innerHTML = '<p class="text-muted">暂无子分类信息</p>';
+        }
+    } catch (error) {
+        console.error('Error loading taxonomy:', error);
+    }
+}
+
+// 打开图片模态框
+function openImageModal(url, attribution) {
+    document.getElementById('modal-image').src = url;
+    document.getElementById('modal-attribution').textContent = attribution;
+    new bootstrap.Modal(document.getElementById('imageModal')).show();
+}
+
+// 显示错误
+function showError(message) {
+    document.getElementById('error-message').classList.remove('d-none');
+    document.getElementById('error-text').textContent = message;
+}
+
+// 获取保护状态徽章样式
+function getConservationBadgeClass(status) {
+    const classes = {
+        'LC': 'bg-success', 'NT': 'bg-info', 'VU': 'bg-warning',
+        'EN': 'bg-danger', 'CR': 'bg-danger', 'EW': 'bg-dark', 'EX': 'bg-dark'
+    };
+    return classes[status] || 'bg-secondary';
+}
+
+// 格式化数字
+function formatNumber(num) {
+    if (!num) return '0';
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+    return num.toString();
+}
+
+// HTML 转义
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// 初始化
+document.addEventListener('DOMContentLoaded', loadSpeciesDetail);
+</script>
+{% endblock %}

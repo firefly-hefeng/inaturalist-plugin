@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% block title %}{{ query or '物种搜索' }} - 自然物种查询门户{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- 搜索区域 -->
+    <div class="search-header mb-4">
+        <h2><i class="fas fa-search text-success me-2"></i>物种搜索</h2>
+        <form action="/search" method="get" class="mt-3">
+            <div class="input-group input-group-lg">
+                <input type="text" name="q" class="form-control" 
+                       placeholder="输入物种名称（支持中文、英文、学名）..."
+                       value="{{ query }}" autocomplete="off" id="search-input">
+                <select name="rank" class="form-select" style="max-width: 150px;">
+                    <option value="">所有等级</option>
+                    <option value="kingdom">界</option>
+                    <option value="phylum">门</option>
+                    <option value="class">纲</option>
+                    <option value="order">目</option>
+                    <option value="family">科</option>
+                    <option value="genus">属</option>
+                    <option value="species">种</option>
+                </select>
+                <button class="btn btn-success" type="submit">
+                    <i class="fas fa-search me-1"></i>搜索
+                </button>
+            </div>
+            <div id="search-suggestions-page" class="search-suggestions shadow"></div>
+        </form>
+    </div>
+    
+    <!-- 加载状态 -->
+    <div id="loading-indicator" class="text-center py-5 {% if query %}d-block{% else %}d-none{% endif %}">
+        <div class="spinner-border text-success" role="status">
+            <span class="visually-hidden">加载中...</span>
+        </div>
+        <p class="text-muted mt-2">搜索中...</p>
+    </div>
+    
+    <!-- 搜索结果 -->
+    <div id="search-results">
+        {% if not query %}
+        <div class="text-center py-5 text-muted">
+            <i class="fas fa-search fa-3x mb-3"></i>
+            <h4>开始你的探索</h4>
+            <p>输入物种名称搜索全球数百万物种信息</p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- 分页 -->
+    <div id="pagination" class="d-none">
+        <nav aria-label="Search results pagination">
+            <ul class="pagination justify-content-center">
+                <li class="page-item disabled" id="prev-page">
+                    <a class="page-link" href="#" tabindex="-1">上一页</a>
+                </li>
+                <li class="page-item active"><a class="page-link" href="#" id="current-page">1</a></li>
+                <li class="page-item" id="next-page">
+                    <a class="page-link" href="#">下一页</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentQuery = '{{ query }}';
+let currentPage = 1;
+
+// 执行搜索
+async function performSearch(query, page = 1, rank = '') {
+    if (!query) return;
+    
+    currentQuery = query;
+    currentPage = page;
+    
+    // 显示加载指示器
+    document.getElementById('loading-indicator').classList.remove('d-none');
+    document.getElementById('search-results').innerHTML = '';
+    document.getElementById('pagination').classList.add('d-none');
+    
+    try {
+        const params = new URLSearchParams({
+            q: query,
+            page: page,
+            per_page: 20
+        });
+        if (rank) params.append('rank', rank);
+        
+        const response = await fetch(`/api/search?${params}`);
+        const data = await response.json();
+        
+        document.getElementById('loading-indicator').classList.add('d-none');
+        
+        if (data.success) {
+            displayResults(data);
+        } else {
+            displayError(data.error || '搜索失败');
+        }
+    } catch (error) {
+        document.getElementById('loading-indicator').classList.add('d-none');
+        displayError('网络错误，请稍后重试');
+        console.error('Search error:', error);
+    }
+}
+
+// 显示搜索结果
+function displayResults(data) {
+    const container = document.getElementById('search-results');
+    const results = data.results || [];
+    
+    if (results.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-5 text-muted">
+                <i class="fas fa-search fa-3x mb-3"></i>
+                <h4>未找到结果</h4>
+                <p>尝试使用其他关键词或学名搜索</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // 统计信息
+    let html = `
+        <div class="mb-3">
+            <span class="text-muted">找到 <strong>${data.total}</strong> 个结果</span>
+            ${data.query ? `<span class="text-muted"> for "<strong>${escapeHtml(data.query)}</strong>"</span>` : ''}
+        </div>
+        <div class="row g-3">
+    `;
+    
+    // 结果卡片
+    html += results.map(taxon => `
+        <div class="col-md-6 col-lg-4">
+            <div class="card species-card h-100">
+                <div class="species-image">
+                    ${taxon.default_photo && taxon.default_photo.medium ? `
+                        <img src="${taxon.default_photo.medium}" 
+                             class="card-img-top" alt="${taxon.name}">
+                    ` : `
+                        <div class="no-image bg-light d-flex align-items-center justify-content-center">
+                            <i class="fas fa-leaf text-muted fa-3x"></i>
+                        </div>
+                    `}
+                    <span class="rank-badge bg-primary">${taxon.rank}</span>
+                    ${taxon.conservation_status ? `
+                        <span class="conservation-badge ${getConservationClass(taxon.conservation_status)}">
+                            ${taxon.conservation_status}
+                        </span>
+                    ` : ''}
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <a href="/species/${taxon.id}" class="text-decoration-none text-dark">
+                            ${taxon.common_names?.chinese || taxon.common_names?.preferred || taxon.name}
+                        </a>
+                    </h5>
+                    <p class="card-text">
+                        <em class="text-muted">${taxon.name}</em>
+                    </p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="badge bg-light text-dark">
+                            <i class="fas fa-eye me-1 text-success"></i>
+                            ${formatNumber(taxon.observations_count)} 次观察
+                        </span>
+                        <span class="badge bg-light text-dark">
+                            ${taxon.iconic_taxon || 'Unknown'}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-top-0">
+                    <a href="/species/${taxon.id}" class="btn btn-outline-success btn-sm w-100">
+                        查看详情 <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    html += '</div>';
+    container.innerHTML = html;
+    
+    // 更新分页
+    updatePagination(data.total, page);
+}
+
+// 显示错误
+function displayError(message) {
+    document.getElementById('search-results').innerHTML = `
+        <div class="alert alert-danger" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>${message}
+        </div>
+    `;
+}
+
+// 更新分页
+function updatePagination(total, currentPage) {
+    const totalPages = Math.ceil(total / 20);
+    const pagination = document.getElementById('pagination');
+    
+    if (totalPages <= 1) {
+        pagination.classList.add('d-none');
+        return;
+    }
+    
+    pagination.classList.remove('d-none');
+    document.getElementById('current-page').textContent = currentPage;
+    
+    const prevBtn = document.getElementById('prev-page');
+    const nextBtn = document.getElementById('next-page');
+    
+    if (currentPage <= 1) {
+        prevBtn.classList.add('disabled');
+    } else {
+        prevBtn.classList.remove('disabled');
+        prevBtn.onclick = () => performSearch(currentQuery, currentPage - 1);
+    }
+    
+    if (currentPage >= totalPages) {
+        nextBtn.classList.add('disabled');
+    } else {
+        nextBtn.classList.remove('disabled');
+        nextBtn.onclick = () => performSearch(currentQuery, currentPage + 1);
+    }
+}
+
+// 获取保护状态样式类
+function getConservationClass(status) {
+    const classes = {
+        'EX': 'bg-dark',
+        'EW': 'bg-dark',
+        'CR': 'bg-danger',
+        'EN': 'bg-danger',
+        'VU': 'bg-warning',
+        'NT': 'bg-info',
+        'LC': 'bg-success'
+    };
+    return classes[status] || 'bg-secondary';
+}
+
+// 格式化数字
+function formatNumber(num) {
+    if (!num) return '0';
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+    return num.toString();
+}
+
+// HTML 转义
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// 初始化
+document.addEventListener('DOMContentLoaded', function() {
+    setupAutocomplete('search-input', 'search-suggestions-page');
+    
+    // 如果有查询参数，自动执行搜索
+    if (currentQuery) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const rank = urlParams.get('rank') || '';
+        performSearch(currentQuery, 1, rank);
+    }
+});
+</script>
+{% endblock %}

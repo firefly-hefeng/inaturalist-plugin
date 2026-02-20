@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero 区域 -->
+<section class="hero-section">
+    <div class="container text-center">
+        <h1 class="display-4 mb-3">
+            <i class="fas fa-leaf text-success"></i>
+            探索自然世界
+        </h1>
+        <p class="lead mb-4">
+            查询全球数百万物种信息，浏览研究级观察记录<br>
+            基于 <a href="https://www.inaturalist.org/" target="_blank" class="text-success">iNaturalist</a> 开源数据
+        </p>
+        
+        <!-- 搜索框 -->
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <form action="/search" method="get" class="hero-search-form">
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-white border-end-0">
+                            <i class="fas fa-search text-muted"></i>
+                        </span>
+                        <input type="text" name="q" class="form-control border-start-0" 
+                               placeholder="输入物种名称（如：喜鹊、Pica pica）..."
+                               autocomplete="off" id="hero-search">
+                        <button class="btn btn-success" type="submit">搜索</button>
+                    </div>
+                    <div id="hero-suggestions" class="search-suggestions shadow"></div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- 快捷链接 -->
+        <div class="mt-4">
+            <span class="text-muted small">热门搜索:</span>
+            <a href="/search?q=喜鹊" class="badge bg-light text-dark text-decoration-none me-1">喜鹊</a>
+            <a href="/search?q=麻雀" class="badge bg-light text-dark text-decoration-none me-1">麻雀</a>
+            <a href="/search?q=家燕" class="badge bg-light text-dark text-decoration-none me-1">家燕</a>
+            <a href="/search?q=蝴蝶" class="badge bg-light text-dark text-decoration-none me-1">蝴蝶</a>
+            <a href="/search?q=樱花" class="badge bg-light text-dark text-decoration-none">樱花</a>
+        </div>
+    </div>
+</section>
+
+<!-- 功能特色 -->
+<section class="py-5">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm feature-card">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-search fa-3x text-success"></i>
+                        </div>
+                        <h5 class="card-title">物种搜索</h5>
+                        <p class="card-text text-muted">
+                            支持中文、英文和学名搜索，获取详细的物种分类信息、图片和保护状态。
+                        </p>
+                        <a href="/search" class="btn btn-outline-success btn-sm">开始搜索</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm feature-card">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-camera fa-3x text-primary"></i>
+                        </div>
+                        <h5 class="card-title">观察记录</h5>
+                        <p class="card-text text-muted">
+                            浏览全球自然观察者的研究级记录，查看照片、时间和地点信息。
+                        </p>
+                        <a href="/observations" class="btn btn-outline-primary btn-sm">浏览记录</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm feature-card">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-map-marked-alt fa-3x text-info"></i>
+                        </div>
+                        <h5 class="card-title">地图浏览</h5>
+                        <p class="card-text text-muted">
+                            在地图上探索物种分布，发现你周围的自然世界。
+                        </p>
+                        <a href="/map" class="btn btn-outline-info btn-sm">打开地图</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 数据展示 -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-3 col-6 mb-3">
+                <div class="stat-item">
+                    <div class="stat-number" id="stat-species">-</div>
+                    <div class="stat-label">物种种类</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 mb-3">
+                <div class="stat-item">
+                    <div class="stat-number" id="stat-observations">-</div>
+                    <div class="stat-label">观察记录</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 mb-3">
+                <div class="stat-item">
+                    <div class="stat-number" id="stat-users">-</div>
+                    <div class="stat-label">活跃用户</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 mb-3">
+                <div class="stat-item">
+                    <div class="stat-number" id="stat-photos">-</div>
+                    <div class="stat-label">研究级照片</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 最新观察 -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-4">
+            <i class="fas fa-clock text-success me-2"></i>最新研究级观察
+        </h2>
+        <div id="latest-observations" class="row g-3">
+            <div class="col-12 text-center py-5">
+                <div class="spinner-border text-success" role="status">
+                    <span class="visually-hidden">加载中...</span>
+                </div>
+                <p class="text-muted mt-2">加载最新观察记录...</p>
+            </div>
+        </div>
+        <div class="text-center mt-4">
+            <a href="/observations" class="btn btn-success">
+                查看更多 <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 加载统计数据
+async function loadStats() {
+    // 这里可以调用 API 获取真实统计数据
+    // 暂时使用模拟数据
+    document.getElementById('stat-species').textContent = '450,000+';
+    document.getElementById('stat-observations').textContent = '200M+';
+    document.getElementById('stat-users').textContent = '3M+';
+    document.getElementById('stat-photos').textContent = '150M+';
+}
+
+// 加载最新观察记录
+async function loadLatestObservations() {
+    try {
+        const response = await fetch('/api/observations?quality_grade=research&has_photos=true&per_page=8');
+        const data = await response.json();
+        
+        if (data.success && data.results.length > 0) {
+            const container = document.getElementById('latest-observations');
+            container.innerHTML = data.results.map(obs => `
+                <div class="col-md-3 col-sm-6">
+                    <div class="card observation-card h-100">
+                        <div class="observation-image">
+                            ${obs.photos.length > 0 ? `
+                                <img src="${obs.photos[0].medium || obs.photos[0].url}" 
+                                     class="card-img-top" alt="${obs.species_guess || 'Unknown'}">
+                            ` : `
+                                <div class="no-image bg-light d-flex align-items-center justify-content-center" style="height: 180px;">
+                                    <i class="fas fa-image text-muted fa-3x"></i>
+                                </div>
+                            `}
+                            <span class="quality-badge ${obs.quality_grade === 'research' ? 'bg-success' : 'bg-warning'}">
+                                ${obs.quality_grade === 'research' ? '研究级' : '需鉴定'}
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="card-title text-truncate">
+                                <a href="/species/${obs.taxon ? obs.taxon.id : ''}" class="text-decoration-none">
+                                    ${obs.species_guess || obs.taxon?.name || 'Unknown'}
+                                </a>
+                            </h6>
+                            <p class="card-text small text-muted mb-1">
+                                <i class="fas fa-user me-1"></i>${obs.user ? obs.user.login : 'Unknown'}
+                            </p>
+                            <p class="card-text small text-muted mb-0">
+                                <i class="fas fa-map-marker-alt me-1"></i>${obs.location ? obs.location.place_guess : 'Unknown location'}
+                            </p>
+                        </div>
+                        <div class="card-footer bg-white border-top-0">
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>${obs.observed_on || 'Unknown date'}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            document.getElementById('latest-observations').innerHTML = `
+                <div class="col-12 text-center py-5 text-muted">
+                    <i class="fas fa-exclamation-circle fa-2x mb-2"></i>
+                    <p>暂无数据</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading observations:', error);
+        document.getElementById('latest-observations').innerHTML = `
+            <div class="col-12 text-center py-5 text-muted">
+                <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                <p>加载失败，请稍后重试</p>
+            </div>
+        `;
+    }
+}
+
+// 初始化
+document.addEventListener('DOMContentLoaded', function() {
+    loadStats();
+    loadLatestObservations();
+    
+    // 设置搜索框自动补全
+    setupAutocomplete('hero-search', 'hero-suggestions');
+});
+</script>
+{% endblock %}

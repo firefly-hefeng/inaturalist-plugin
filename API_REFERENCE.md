@@ -116,7 +116,7 @@ def get_by_name(self, scientific_name: str) -> Optional[Taxon]
 
 ```python
 # 通过 ID 获取
-taxon = service.get_by_id(9083)
+taxon = service.get_by_id(8318)
 
 # 通过学名获取
 taxon = service.get_by_name("Pica pica")
@@ -149,7 +149,7 @@ def get_ancestors(self, taxon_id: int) -> List[Taxon]
 
 ```python
 # 获取喜鹊的完整分类路径
-ancestors = service.get_ancestors(9083)
+ancestors = service.get_ancestors(8318)
 # 返回: [Animalia, Chordata, Aves, Passeriformes, Corvidae, Pica]
 ```
 
@@ -225,7 +225,7 @@ def search(
 ```python
 # 搜索特定物种的研究级观察
 observations = service.search(
-    taxon_id=9083,
+    taxon_id=8318,
     quality_grade="research",
     has_photos=True,
     per_page=50
@@ -256,7 +256,7 @@ observations = service.search(
 observations = service.search(
     observed_d1="2024-01-01",
     observed_d2="2024-12-31",
-    taxon_id=9083
+    taxon_id=8318
 )
 ```
 
@@ -294,7 +294,7 @@ def count(
 ```python
 # 统计北京的喜鹊观察数量
 count = service.count(
-    taxon_id=9083,
+    taxon_id=8318,
     place_id= anywhere,
     quality_grade="research"
 )
@@ -343,7 +343,7 @@ def get_popular(
 **调用示例：**
 
 ```python
-popular = service.get_popular(taxon_id=9083, per_page=10)
+popular = service.get_popular(taxon_id=8318, per_page=10)
 ```
 
 ---
@@ -447,7 +447,7 @@ def search_species(
     "total": 5,
     "results": [
         {
-            "id": 9083,
+            "id": 8318,
             "name": "Pica pica",
             "rank": "species",
             "display_name": "喜鹊 (Pica pica)",
@@ -505,7 +505,7 @@ def get_species_images(
 ```json
 {
     "success": true,
-    "taxon_id": 9083,
+    "taxon_id": 8318,
     "size": "medium",
     "total": 10,
     "images": [

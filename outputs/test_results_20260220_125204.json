@@ -1,0 +1,74 @@
+{
+  "timestamp": "20260220_125204",
+  "total_tests": 11,
+  "passed": 9,
+  "failed": 2,
+  "results": [
+    {
+      "name": "客户端创建",
+      "status": "PASSED",
+      "elapsed": 0.0,
+      "error": null
+    },
+    {
+      "name": "API 连接测试",
+      "status": "PASSED",
+      "elapsed": 0.6,
+      "error": null
+    },
+    {
+      "name": "物种搜索",
+      "status": "FAILED",
+      "elapsed": 0.6,
+      "error": ""
+    },
+    {
+      "name": "物种详情获取",
+      "status": "FAILED",
+      "elapsed": 0.74,
+      "error": ""
+    },
+    {
+      "name": "自动补全功能",
+      "status": "PASSED",
+      "elapsed": 0.76,
+      "error": null
+    },
+    {
+      "name": "观察记录搜索",
+      "status": "PASSED",
+      "elapsed": 0.83,
+      "error": null
+    },
+    {
+      "name": "位置搜索",
+      "status": "PASSED",
+      "elapsed": 0.71,
+      "error": null
+    },
+    {
+      "name": "图片 URL 获取",
+      "status": "PASSED",
+      "elapsed": 0.71,
+      "error": null
+    },
+    {
+      "name": "物种统计",
+      "status": "PASSED",
+      "elapsed": 0.89,
+      "error": null
+    },
+    {
+      "name": "分页功能",
+      "status": "PASSED",
+      "elapsed": 1.45,
+      "error": null
+    },
+    {
+      "name": "插件集成测试",
+      "status": "PASSED",
+      "elapsed": 2.15,
+      "error": null
+    }
+  ]
+}

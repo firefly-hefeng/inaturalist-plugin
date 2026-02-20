@@ -1,0 +1,377 @@
+{% extends "base.html" %}
+
+{% block title %}地图浏览 - 自然物种查询门户{% endblock %}
+
+{% block content %}
+<div class="map-page">
+    <!-- 地图侧边栏 -->
+    <div class="map-sidebar">
+        <div class="sidebar-header">
+            <h5><i class="fas fa-map-marked-alt me-2"></i>地图浏览</h5>
+            <p class="small text-muted mb-0">点击地图任意位置查看周围物种</p>
+        </div>
+        
+        <div class="sidebar-content">
+            <!-- 位置信息 -->
+            <div id="location-info" class="p-3 border-bottom d-none">
+                <h6>选中位置</h6>
+                <p class="small text-muted mb-1">
+                    纬度: <span id="selected-lat">--</span><br>
+                    经度: <span id="selected-lng">--</span>
+                </p>
+                <div class="d-grid">
+                    <button class="btn btn-success btn-sm" id="search-here-btn">
+                        <i class="fas fa-search me-1"></i>搜索此区域
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 物种列表 -->
+            <div id="species-list" class="species-list-container">
+                <div class="p-4 text-center text-muted">
+                    <i class="fas fa-map-marker-alt fa-3x mb-3"></i>
+                    <p>点击地图上的任意位置<br>查看周围的物种种类</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 地图容器 -->
+    <div id="map" class="map-container"></div>
+</div>
+
+<!-- 观察记录模态框 -->
+<div class="modal fade" id="observationsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <span id="modal-species-name"></span> 的观察记录
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="modal-observations-list" class="row g-3">
+                    <!-- 动态生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.map-page {
+    display: flex;
+    height: calc(100vh - 60px);
+}
+
+.map-sidebar {
+    width: 350px;
+    background: #fff;
+    border-right: 1px solid #dee2e6;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-header {
+    padding: 1rem;
+    border-bottom: 1px solid #dee2e6;
+    background: #f8f9fa;
+}
+
+.sidebar-content {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.species-list-container {
+    padding: 0;
+}
+
+.species-list-item {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+.species-list-item:hover {
+    background: #f8f9fa;
+}
+
+.species-list-item img {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-right: 0.75rem;
+}
+
+.species-list-item .species-info {
+    flex: 1;
+}
+
+.species-list-item .species-count {
+    color: #28a745;
+    font-weight: 500;
+}
+
+.map-container {
+    flex: 1;
+    height: 100%;
+}
+
+.leaflet-popup-content {
+    margin: 10px;
+}
+
+.popup-species-item {
+    display: flex;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.popup-species-item:last-child {
+    border-bottom: none;
+}
+
+.popup-species-item img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-right: 10px;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let map;
+let currentMarker = null;
+let currentCircle = null;
+
+// 初始化地图
+function initMap() {
+    // 默认位置：北京
+    const defaultLat = 39.9042;
+    const defaultLng = 116.4074;
+    
+    map = L.map('map').setView([defaultLat, defaultLng], 10);
+    
+    // 添加底图
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    
+    // 地图点击事件
+    map.on('click', function(e) {
+        const lat = e.latlng.lat;
+        const lng = e.latlng.lng;
+        
+        selectLocation(lat, lng);
+    });
+    
+    // 尝试获取用户位置
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                map.setView([lat, lng], 12);
+            },
+            function() {
+                console.log('无法获取用户位置');
+            }
+        );
+    }
+}
+
+// 选择位置
+function selectLocation(lat, lng) {
+    // 更新标记
+    if (currentMarker) {
+        map.removeLayer(currentMarker);
+    }
+    if (currentCircle) {
+        map.removeLayer(currentCircle);
+    }
+    
+    currentMarker = L.marker([lat, lng]).addTo(map);
+    currentCircle = L.circle([lat, lng], {
+        radius: 10000,  // 10km
+        color: '#28a745',
+        fillColor: '#28a745',
+        fillOpacity: 0.1
+    }).addTo(map);
+    
+    // 更新侧边栏
+    document.getElementById('location-info').classList.remove('d-none');
+    document.getElementById('selected-lat').textContent = lat.toFixed(4);
+    document.getElementById('selected-lng').textContent = lng.toFixed(4);
+    
+    // 绑定搜索按钮事件
+    document.getElementById('search-here-btn').onclick = () => loadSpeciesAtLocation(lat, lng);
+    
+    // 自动加载
+    loadSpeciesAtLocation(lat, lng);
+}
+
+// 加载位置周围的物种
+async function loadSpeciesAtLocation(lat, lng) {
+    const container = document.getElementById('species-list');
+    
+    container.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border spinner-border-sm text-success" role="status"></div>
+            <p class="small text-muted mt-2">加载中...</p>
+        </div>
+    `;
+    
+    try {
+        const response = await fetch(`/api/location/species?lat=${lat}&lng=${lng}&radius=10&per_page=20`);
+        const data = await response.json();
+        
+        if (data.success && data.species.length > 0) {
+            displaySpeciesList(data.species, lat, lng);
+        } else {
+            container.innerHTML = `
+                <div class="p-4 text-center text-muted">
+                    <i class="fas fa-search fa-2x mb-2"></i>
+                    <p class="small">此区域暂无观察记录</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading species:', error);
+        container.innerHTML = `
+            <div class="p-4 text-center text-muted">
+                <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                <p class="small">加载失败，请重试</p>
+            </div>
+        `;
+    }
+}
+
+// 显示物种列表
+function displaySpeciesList(species, lat, lng) {
+    const container = document.getElementById('species-list');
+    
+    // 按观察数量排序
+    species.sort((a, b) => b.count - a.count);
+    
+    container.innerHTML = species.map(s => `
+        <div class="species-list-item" onclick="showSpeciesObservations(${s.taxon.id}, '${escapeHtml(s.taxon.preferred_common_name || s.taxon.name)}')">
+            <img src="${s.taxon.default_photo_url || '/static/images/no-image.png'}" 
+                 alt="${s.taxon.name}" 
+                 onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2250%22 height=%2250%22><rect width=%2250%22 height=%2250%22 fill=%22%23f0f0f0%22/><text x=%2225%22 y=%2225%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22>🌿</text></svg>'">
+            <div class="species-info">
+                <div class="species-name">${s.taxon.preferred_common_name || s.taxon.name}</div>
+                <div class="species-scientific small text-muted fst-italic">${s.taxon.name}</div>
+            </div>
+            <div class="species-count">${s.count}</div>
+        </div>
+    `).join('');
+    
+    // 在地图上添加弹出窗口
+    if (currentMarker) {
+        const popupContent = `
+            <div style="max-height: 200px; overflow-y: auto;">
+                <h6>周围物种 (Top 5)</h6>
+                ${species.slice(0, 5).map(s => `
+                    <div class="popup-species-item">
+                        <img src="${s.taxon.default_photo_url || ''}" 
+                             onerror="this.style.display='none'">
+                        <div>
+                            <div>${s.taxon.preferred_common_name || s.taxon.name}</div>
+                            <small class="text-muted">${s.count} 次观察</small>
+                        </div>
+                    </div>
+                `).join('')}
+                ${species.length > 5 ? `<div class="text-center mt-2"><small class="text-muted">还有 ${species.length - 5} 种...</small></div>` : ''}
+            </div>
+        `;
+        currentMarker.bindPopup(popupContent).openPopup();
+    }
+}
+
+// 显示物种观察记录
+async function showSpeciesObservations(taxonId, speciesName) {
+    document.getElementById('modal-species-name').textContent = speciesName;
+    
+    const container = document.getElementById('modal-observations-list');
+    container.innerHTML = `
+        <div class="col-12 text-center py-4">
+            <div class="spinner-border text-success" role="status"></div>
+            <p class="text-muted mt-2">加载中...</p>
+        </div>
+    `;
+    
+    const modal = new bootstrap.Modal(document.getElementById('observationsModal'));
+    modal.show();
+    
+    try {
+        const response = await fetch(`/api/observations?taxon_id=${taxonId}&quality_grade=research&per_page=6`);
+        const data = await response.json();
+        
+        if (data.success && data.results.length > 0) {
+            container.innerHTML = data.results.map(obs => `
+                <div class="col-md-6">
+                    <div class="card">
+                        ${obs.photos.length > 0 ? `
+                            <img src="${obs.photos[0].medium || obs.photos[0].url}" class="card-img-top" alt="">
+                        ` : ''}
+                        <div class="card-body">
+                            <p class="small text-muted mb-1">
+                                <i class="fas fa-user me-1"></i>${obs.user?.login || 'Unknown'}
+                            </p>
+                            <p class="small text-muted mb-1">
+                                <i class="fas fa-map-marker-alt me-1"></i>${obs.location?.place_guess || 'Unknown'}
+                            </p>
+                            <p class="small text-muted mb-0">
+                                <i class="fas fa-calendar me-1"></i>${obs.observed_on || 'Unknown'}
+                            </p>
+                        </div>
+                        <div class="card-footer">
+                            <a href="${obs.url}" target="_blank" class="btn btn-sm btn-outline-success w-100">
+                                查看详情
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            container.innerHTML = `
+                <div class="col-12 text-center py-4 text-muted">
+                    <i class="fas fa-camera fa-2x mb-2"></i>
+                    <p>暂无观察记录</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        container.innerHTML = `
+            <div class="col-12 text-center py-4 text-muted">
+                <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                <p>加载失败</p>
+            </div>
+        `;
+    }
+}
+
+// HTML 转义
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// 初始化
+document.addEventListener('DOMContentLoaded', initMap);
+</script>
+{% endblock %}
