@@ -16,7 +16,7 @@
 
 ```bash
 # 克隆项目
-git clone https://github.com/yourusername/inaturalist-plugin.git
+git clone https://github.com/firefly-hefeng/inaturalist-plugin.git
 cd inaturalist-plugin
 
 # 安装依赖

@@ -217,7 +217,7 @@ if __name__ == "__main__":
     print("="*60)
     print("🌿 iNaturalist 自然物种查询门户")
     print("="*60)
-    print("访问地址: http://localhost:5000")
+    print("访问地址: http://localhost:8080")
     print("="*60)
     
     # 确保模板文件夹存在
