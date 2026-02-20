@@ -1,0 +1,20 @@
+# 核心依赖
+requests>=2.28.0
+
+# Web 框架（可选）
+flask>=2.0.0
+fastapi>=0.85.0
+uvicorn>=0.18.0
+
+# 数据处理（可选）
+pandas>=1.5.0
+numpy>=1.23.0
+
+# 地图可视化（可选）
+folium>=0.14.0
+
+# 图片处理（可选）
+Pillow>=9.0.0
+
+# 测试
+dataclasses>=0.6; python_version < "3.7"
